@@ -1,144 +1,105 @@
 """
-els.xc_protocol
-===============
+ELS Cross-Connector (XC) Demo Layer
 
-Minimal "cross-channel" (XC) protocol helpers for ELS.
+This module demonstrates the *shape* of a cross-connector layer
+that links the Canonical ELS pipeline to downstream modules such
+as UL (Universal Language layer).
 
-This file is a public demo of the XC *shape* only.
-It is **not** a networking stack and carries **no** secrets.
+XC acts as:
+  - a hub for normalized emotion states
+  - a compatibility layer for downstream modules
+  - a transparent pass-through for safety information
+
+This file intentionally contains *no* sensitive logic.
+Everything here is minimal and safe for a public demo.
 """
 
-from __future__ import annotations
-
-from dataclasses import dataclass, asdict
-from enum import Enum
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
-import json
-import time
-
-
-XC_VERSION = "0.1-demo"
-
-
-class XCCommand(str, Enum):
-    """High-level intent of an XC frame.
-
-    This models the "verb" of the interaction, not transport details.
-    """
-
-    PING = "ping"          # health-check / heartbeat
-    SYNC = "sync"          # send current regulation state
-    CAST = "cast"          # push a user utterance + ELS reading
-    CAPTURE = "capture"    # log / archive without acting
-    HEAL = "heal"          # model requests help for recovery
 
 
 @dataclass
-class XCFrame:
-    """Canonical XC envelope shared between models / services.
+class XCState:
+    """
+    Unified representation of a canonical emotion state,
+    ready to be delivered to downstream layers.
 
-    The goal is to have a small, explicit header for routing and a
-    flexible `payload` that can carry ELS-aware data structures.
+    This is what UL, UI, or analytics modules consume.
+    """
+    raw: float
+    n: float
+    u: float
+    safety_level: str
+    safety_reason: str
+    warmth_c: float
+
+
+class XCConnector:
+    """
+    Minimal cross-connector for ELS.
+
+    In a full system, XC would support:
+      - personality hooks
+      - culture adaptation
+      - conversation context
+      - multi-signal fusion
+      - caching / batching
+
+    In this public demo, XC simply exposes a clean normalized
+    structure so external researchers can plug in UL or
+    other experimental modules.
     """
 
-    version: str
-    command: XCCommand
-    channel: str          # e.g. "chat", "system-log", "telemetry"
-    payload: Dict[str, Any]
-    meta: Dict[str, Any]
+    def __init__(self, mode: str = "demo") -> None:
+        self.mode = mode
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to a plain serialisable dict."""
-        d = asdict(self)
-        d["command"] = self.command.value
-        return d
-
-    def to_json(self, **kwargs: Any) -> str:
-        """Serialise the frame as JSON.
-
-        Extra keyword arguments are forwarded to json.dumps.
+    def canonical_to_xc(
+        self,
+        canonical_dict: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> XCState:
         """
-        return json.dumps(self.to_dict(), **kwargs)
+        Convert the canonical pipeline output into an XCState.
 
-    @staticmethod
-    def from_dict(data: Dict[str, Any]) -> "XCFrame":
-        """Reconstruct an XCFrame from a dict.
+        Args:
+          canonical_dict:
+            Dictionary emitted by EmotionCanonical.process().
+          context:
+            Optional metadata or runtime hints.
 
-        This is only a convenience helper for demos.
+        Returns:
+          XCState: clean normalized state for downstream modules.
         """
-        return XCFrame(
-            version=data.get("version", XC_VERSION),
-            command=XCCommand(data["command"]),
-            channel=data.get("channel", "chat"),
-            payload=data.get("payload", {}),
-            meta=data.get("meta", {}),
+        return XCState(
+            raw=canonical_dict["raw"],
+            n=canonical_dict["n"],
+            u=canonical_dict["u"],
+            safety_level=str(canonical_dict["safety_level"]),
+            safety_reason=str(canonical_dict["safety_reason"]),
+            warmth_c=float(canonical_dict.get("warmth_c", 0.0)),
         )
 
 
-def _now_ms() -> int:
-    """Return current unix time in milliseconds.
+# convenience wrapper ----------------------------------------------------------
 
-    Used only for demo timestamps.
+def to_xc_state(
+    canonical_dict: Dict[str, Any],
+    context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """
-    return int(time.time() * 1000)
-
-
-def frame_from_canonical(
-    *,
-    command: XCCommand,
-    channel: str,
-    canonical_result: Dict[str, Any],
-    user_id: Optional[str] = None,
-    session_id: Optional[str] = None,
-    extra_meta: Optional[Dict[str, Any]] = None,
-) -> XCFrame:
-    """Build an XCFrame from an EmotionCanonical.process() result.
-
-    Args:
-        command:
-            High-level intent of this frame (e.g. XCCommand.SYNC).
-        channel:
-            Logical channel name. For demos "chat" is usually enough.
-        canonical_result:
-            Dict returned by ``EmotionCanonical.process(...)``.
-        user_id:
-            Optional stable identifier for the end user.
-        session_id:
-            Optional identifier for the current conversation / run.
-        extra_meta:
-            Optional bag of additional metadata to merge into `meta`.
+    Convert to a plain dict instead of XCState, for quick logging
+    or for languages that do not want Python dataclasses.
 
     Returns:
-        XCFrame:
-            A fully populated frame ready to serialise or pass to
-            downstream systems.
+      A dict with normalized fields.
     """
-
-    meta: Dict[str, Any] = {
-        "ts_ms": _now_ms(),
+    xc = XCConnector()
+    state = xc.canonical_to_xc(canonical_dict, context=context)
+    return {
+        "raw": state.raw,
+        "n": state.n,
+        "u": state.u,
+        "safety_level": state.safety_level,
+        "safety_reason": state.safety_reason,
+        "warmth_c": state.warmth_c,
     }
-    if user_id is not None:
-        meta["user_id"] = user_id
-    if session_id is not None:
-        meta["session_id"] = session_id
-    if extra_meta:
-        meta.update(extra_meta)
-
-    # In this public demo we expose only high-level, non-sensitive
-    # fields from the canonical layer.
-    payload: Dict[str, Any] = {
-        "raw": canonical_result.get("raw"),
-        "n": canonical_result.get("n"),
-        "u": canonical_result.get("u"),
-        "safety_level": canonical_result.get("safety_level"),
-        "safety_reason": canonical_result.get("safety_reason"),
-        "warmth_c": canonical_result.get("warmth_c"),
-    }
-
-    return XCFrame(
-        version=XC_VERSION,
-        command=command,
-        channel=channel,
-        payload=payload,
-        meta=meta,
-    )
