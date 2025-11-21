@@ -1,0 +1,144 @@
+"""
+els.xc_protocol
+===============
+
+Minimal "cross-channel" (XC) protocol helpers for ELS.
+
+This file is a public demo of the XC *shape* only.
+It is **not** a networking stack and carries **no** secrets.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, asdict
+from enum import Enum
+from typing import Any, Dict, Optional
+import json
+import time
+
+
+XC_VERSION = "0.1-demo"
+
+
+class XCCommand(str, Enum):
+    """High-level intent of an XC frame.
+
+    This models the "verb" of the interaction, not transport details.
+    """
+
+    PING = "ping"          # health-check / heartbeat
+    SYNC = "sync"          # send current regulation state
+    CAST = "cast"          # push a user utterance + ELS reading
+    CAPTURE = "capture"    # log / archive without acting
+    HEAL = "heal"          # model requests help for recovery
+
+
+@dataclass
+class XCFrame:
+    """Canonical XC envelope shared between models / services.
+
+    The goal is to have a small, explicit header for routing and a
+    flexible `payload` that can carry ELS-aware data structures.
+    """
+
+    version: str
+    command: XCCommand
+    channel: str          # e.g. "chat", "system-log", "telemetry"
+    payload: Dict[str, Any]
+    meta: Dict[str, Any]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to a plain serialisable dict."""
+        d = asdict(self)
+        d["command"] = self.command.value
+        return d
+
+    def to_json(self, **kwargs: Any) -> str:
+        """Serialise the frame as JSON.
+
+        Extra keyword arguments are forwarded to json.dumps.
+        """
+        return json.dumps(self.to_dict(), **kwargs)
+
+    @staticmethod
+    def from_dict(data: Dict[str, Any]) -> "XCFrame":
+        """Reconstruct an XCFrame from a dict.
+
+        This is only a convenience helper for demos.
+        """
+        return XCFrame(
+            version=data.get("version", XC_VERSION),
+            command=XCCommand(data["command"]),
+            channel=data.get("channel", "chat"),
+            payload=data.get("payload", {}),
+            meta=data.get("meta", {}),
+        )
+
+
+def _now_ms() -> int:
+    """Return current unix time in milliseconds.
+
+    Used only for demo timestamps.
+    """
+    return int(time.time() * 1000)
+
+
+def frame_from_canonical(
+    *,
+    command: XCCommand,
+    channel: str,
+    canonical_result: Dict[str, Any],
+    user_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    extra_meta: Optional[Dict[str, Any]] = None,
+) -> XCFrame:
+    """Build an XCFrame from an EmotionCanonical.process() result.
+
+    Args:
+        command:
+            High-level intent of this frame (e.g. XCCommand.SYNC).
+        channel:
+            Logical channel name. For demos "chat" is usually enough.
+        canonical_result:
+            Dict returned by ``EmotionCanonical.process(...)``.
+        user_id:
+            Optional stable identifier for the end user.
+        session_id:
+            Optional identifier for the current conversation / run.
+        extra_meta:
+            Optional bag of additional metadata to merge into `meta`.
+
+    Returns:
+        XCFrame:
+            A fully populated frame ready to serialise or pass to
+            downstream systems.
+    """
+
+    meta: Dict[str, Any] = {
+        "ts_ms": _now_ms(),
+    }
+    if user_id is not None:
+        meta["user_id"] = user_id
+    if session_id is not None:
+        meta["session_id"] = session_id
+    if extra_meta:
+        meta.update(extra_meta)
+
+    # In this public demo we expose only high-level, non-sensitive
+    # fields from the canonical layer.
+    payload: Dict[str, Any] = {
+        "raw": canonical_result.get("raw"),
+        "n": canonical_result.get("n"),
+        "u": canonical_result.get("u"),
+        "safety_level": canonical_result.get("safety_level"),
+        "safety_reason": canonical_result.get("safety_reason"),
+        "warmth_c": canonical_result.get("warmth_c"),
+    }
+
+    return XCFrame(
+        version=XC_VERSION,
+        command=command,
+        channel=channel,
+        payload=payload,
+        meta=meta,
+    )
