@@ -13,6 +13,10 @@ Real deployments require profile-specific tuning, safety evaluation, and stabili
 
 1. Repository Overview
 
+Note: This repository contains only a public-safe demo subset.  
+The full ELS system includes additional safety controllers, XC architecture,  
+and extended UL corpora which are not part of this release.
+
 This demo includes three primary layers:
 
 1. Canonical Layer (els/canonical.py)
