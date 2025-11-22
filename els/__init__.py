@@ -1,28 +1,18 @@
 """
 els – Emotion Language Stack (demo)
 
-This package provides a minimal public demo of the ELS pipeline:
+Public-safe subset:
+- Canonical layer (U* transform + safety gate)
+- UL layer (metaphor mapping)
 
-    Canonical  →  XC (cross-connector)  →  UL (Universal Language)
-
-The goal is to show the *shape* of the stack, not any real-world
-policy or product behavior. All mappings are intentionally soft,
-illustrative, and poetic.
+XC and advanced controllers are intentionally excluded from the public API.
 """
 
-from .Canonical import (
+from .canonical import (
     EmotionCanonical,
     SafetyGateResult,
     SafetyLevel,
     apply_redline_safety,
-)
-
-from .xc import (
-    CanonicalSnapshot,
-    XCState,
-    XCConnector,
-    canonical_to_xc,
-    to_xc_state,
 )
 
 from .ul import (
@@ -34,23 +24,15 @@ from .ul import (
 )
 
 __all__ = [
-    # Canonical layer
     "EmotionCanonical",
     "SafetyGateResult",
     "SafetyLevel",
     "apply_redline_safety",
-
-    # XC layer
-    "CanonicalSnapshot",
-    "XCState",
-    "XCConnector",
-    "canonical_to_xc",
-    "to_xc_state",
-
-    # UL layer
     "Intensity",
     "EmotionState",
     "ULResult",
     "ULMapper",
     "to_metaphor",
 ]
+
+__version__ = "0.1.0"
