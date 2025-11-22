@@ -164,13 +164,15 @@ agent-specific profiles
 
 
 ---
-
 8. License
 
-This demo version is released under a permissive open-source license.
-(You may choose MIT, Apache-2.0, or a custom license.)
+This project is released under the **Apache License 2.0**.
 
+You are free to use, modify, and distribute this software, provided that you
+include the required copyright and license notices.
 
+This license also includes an explicit **patent grant**, ensuring safe use in
+research and industry contexts.
 ---
 
 9. Contact / Discussion
