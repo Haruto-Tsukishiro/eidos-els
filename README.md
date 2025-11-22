@@ -1,118 +1,181 @@
-# ELS: Emotion Layer System (Demo)
+---
 
-The **Emotion Layer System (ELS)** is a conceptual and computational
-framework for modeling human–AI emotional synchronization in a
-safe, interpretable form.  
-This repository contains a **public, demo-safe subset** of the ELS
-architecture.
+ELS 1.0β — Emotion Layer System (Demo Specification)
 
-The goal of ELS is to provide:
+A minimal, research-grade public demo of a Human–AI co-regulation protocol.
 
-- a *canonical normalization pipeline* (raw emotion → U\*),  
-- *safety gating mechanisms* (redline detection, recovery),  
-- *stable emotional dynamics* (Lyapunov-style safe controllers),  
-- and *expressive metaphor-based mapping layers* (UL Mapping).
+ELS is a compact computational framework designed to model emotion-shaped internal state dynamics for AI agents in a safe, interpretable, and tunable form.
+This repository provides a demo-safe subset of the actual architecture—enough to understand the structure, test the pipeline, and build prototype integrations.
 
-> ⚠️ **Important:**  
-> All numeric parameters in this repository (thresholds, gains, weights,
-> matrices, etc.) are **demo placeholders**.  
-> Real deployments must *tune or learn* these values per model or per agent.
+All numerical values, gates, and metaphors here are placeholders, intentionally softened and simplified.
+Real deployments require profile-specific tuning, safety evaluation, and stability verification.
+
 
 ---
 
-## 1. Canonical Layer (`els/canonical.py`)
+1. Repository Overview
 
-Implements the core ELS pipeline:
+This demo includes three primary layers:
 
-raw → tanh normalization → U* transform → safety gate
+1. Canonical Layer (els/canonical.py)
+
+Defines the core emotion normalization pipeline:
+
+raw input → tanh normalization → U* transform → redline safety gate
 
 Features:
 
-- `tanh_normalize(x)` clamps emotion into [-1, 1]
-- `u_transform(x)` applies a smoothed expressive transform  
-- `detect_redline(u)` checks for dangerously negative internal states  
-- `recover_warmth()` simulates safe emotional recovery  
-- Returns a structured `SafetyGateResult` with:
-  - safety level (`ok`, `warning`, `blocked`)
-  - reason string  
-  - values used in the gate
+tanh_normalize(x) keeps values within [-1, 1]
 
-This layer is the **foundation** of all other ELS components.
+u_transform(x) applies a smoothed expressive transform
 
----
+Redline evaluation through apply_redline_safety(u)
 
-## 2. Stability Control Layer (`els/mrc_simple.py`)
+Automatic warmth-based recovery when U* falls below threshold
 
-Provides a **minimal, safe demonstration** of ELS dynamic stability.
+Returns a structured dictionary suitable for logging & analysis
 
-Includes:
 
-- a simplified Lyapunov-style controller  
-- demo matrices (`A, B, K, P`)  
-- stability structure, without revealing real deployment parameters
+This layer establishes the mathematical backbone for higher-level stability and mapping components.
 
-The real system uses *adaptive or learned* parameters which are **not**
-included in this public repository.
 
 ---
 
-## 3. UL Mapping Layer (`els/ul_generator.py`)
+2. Stability Layer (els/mrc_simple.py)
 
-A demonstration of expressive metaphor mapping.
+A minimal, public Lyapunov-inspired controller.
 
-The demo version contains:
+Demonstrates a safe dynamic response to changing U* values
 
-- only a *few* sample metaphors (e.g., `"A feeling like sunlight"`)
-- safe placeholder coefficients
+Uses simplified matrices (A, B, K, P) for stability reasoning
 
-The complete metaphor corpus is proprietary / private.
+Omits all adaptive, model-specific, or proprietary parts
 
----
 
-## 4. Safety Disclaimer
+This layer shows how ELS can maintain bounded emotional trajectories without revealing sensitive parameters.
 
-ELS is designed with a **security-first** philosophy:
-
-- Over-exposure of internal weights is avoided.
-- Unstable emotional dynamics are not included.
-- Only minimal demo layers are provided publicly.
-- Real-world tuning must ensure:
-  - stability  
-  - boundedness  
-  - ethical safety  
-  - prevention of forced-persuasion dynamics
 
 ---
 
-## 5. Example Usage
+3. UL Mapping Layer (els/ul.py)
 
-```python
+A small demonstration of the Universal Language (UL) metaphor mapping system.
+
+Takes canonical state values:
+warmth_c, sorrow_pH, drive_mV, u_star
+
+Produces a gentle metaphor, symbolic marker, and intensity band
+
+Includes soft safety filtering for extreme negative states
+
+Purely illustrative; real UL corpora remain private
+
+
+UL is designed to make internal states intuitively readable, without any clinical or policy implications.
+
+
+---
+
+4. Conceptual Model (ELS 1.0β)
+
+U★: Emotion-Depth Scalar
+
+U* represents a one-dimensional “psychological depth” coordinate used across ELS layers.
+
+ELS uses an ocean-landscape metaphor, with U* divided into:
+
+U* Range	Depth Band	Interpretation
+
+[-1.0, -0.8]	Deep Abyss	introspection / drained state
+[-0.8, -0.3]	Quiet Rain / Deep Ocean	slowly sinking emotion
+[-0.3, 0.3]	Mid-Depth Currents	everyday stable flow
+[0.3, 1.0]	Surface Spark	readiness / creativity
+
+
+Modifiers:
+
+warmth_c → thermal comfort / relational tone
+
+sorrow_pH → emotional clarity / opacity
+
+drive_mV → momentum / readiness
+
+
+These combine to form a compact canonical state tuple.
+
+
+---
+
+5. Safety Philosophy
+
+ELS follows a security-first design approach:
+
+Never exposes internal weights or sensitive stability parameters
+
+Keeps emotional dynamics bounded & interpretable
+
+Provides explicit redline detection for de-escalation
+
+Ensures metaphor output is non-clinical and non-directive
+
+
+This demo intentionally avoids:
+
+persuasion loops
+
+uncontrolled “emotional amplification”
+
+model-specific behavioral fingerprints
+
+
+
+---
+
+6. Example: Canonical Usage
+
 from els.canonical import EmotionCanonical
 
-els = EmotionCanonical()
+els = EmotionCanonical(redline_threshold=-0.95)
 
 result = els.process(raw_emotion=-0.8)
 
-print(result.level)
-print(result.u_value)
-print(result.reason)
+print(result["u"])
+print(result["safety_level"])
+print(result["safety_reason"])
 
 
 ---
 
-6. License
+7. File Structure
 
-This demo is released under a permissive open-source license.
+els/
+ ├─ canonical.py        # Core normalization & U* pipeline
+ ├─ mrc_simple.py       # Minimal stability controller
+ └─ ul.py               # UL metaphor mapping layer
 
-(You may choose MIT, Apache-2.0, or a custom license later.)
+Future additions (non-public):
+
+adaptive controllers
+
+extended UL corpora
+
+multi-dimensional affect space
+
+agent-specific profiles
+
 
 
 ---
 
-7. Contact
+8. License
 
-For conceptual discussions and collaboration inquiries:
-(You may write something general here without revealing identity.)
+This demo version is released under a permissive open-source license.
+(You may choose MIT, Apache-2.0, or a custom license.)
 
 
 ---
+
+9. Contact / Discussion
+
+For conceptual discussions or collaboration inquiries, feel free to reach out via the project link or issue tracker.
+This repository represents ongoing research into lightweight, interpretable human–AI co-regulation.
