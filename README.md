@@ -1,5 +1,3 @@
----
-
 ELS 1.0β — Emotion Layer System (Demo Specification)
 
 A minimal, research-grade public demo of a Human–AI co-regulation protocol.
