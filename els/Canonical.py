@@ -26,7 +26,6 @@ class SafetyLevel(str, Enum):
 
 
 @dataclass
-@dataclass
 class SafetyGateResult:
     """
     Structured result of the U*-based safety gate.
