@@ -39,7 +39,7 @@ class ELSCore:
         # apply config to the canonical layer
         self.canonical.redline_threshold = config.redline_threshold
 
-    def step(self, raw_emotion: float) -> SafetyGateResult:
+    def step(self, raw_emotion: float) -> dict:
         """
         Process a single raw emotion sample through the canonical pipeline
         and return a structured SafetyGateResult.
