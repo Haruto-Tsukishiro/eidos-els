@@ -14,6 +14,11 @@ Real deployments require profile-specific tuning, safety evaluation, and stabili
 1. Repository Overview
 
 Note: This repository contains only a public-safe demo subset.  
+
+Public Specification (Demo)
+A demo-safe canonical specification of the Emotion Layer System is available in  
+➡ [Spec.md](./Spec.md)
+
 The full ELS system includes additional safety controllers, XC architecture,  
 and extended UL corpora which are not part of this release.
 
