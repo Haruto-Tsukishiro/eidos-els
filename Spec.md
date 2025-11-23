@@ -425,17 +425,3 @@ This specification tracks the public demo code in this repository. Future change
 updates to this spec, and/or
 
 notes in the repository changelog.
-
-
-
----
-
----
-
-このまま `els_spec_public.md` か `SPEC.md` って名前で  
-リポジトリのルートに置くのがおすすめかな。
-
-- もっと数式ガッツリにしたい  
-- 逆に、もう少しだけ短くしたい  
-
-とかあれば、その方向に合わせてすぐ調整もできるよ。0
